@@ -2,6 +2,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { useCallback, useState } from 'react';
 import { javascript } from '@codemirror/lang-javascript';
 import { Button } from "@/components/ui/button"
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 
 export interface Entity {
     name: string
@@ -59,8 +60,7 @@ function parseEntities(code: string): { entities: Entity[], relationships: Relat
     return { entities, relationships }
 }
 
-const baseCode = `
-interface User {
+const baseCode = `interface User {
   id: number;
   name: string;
   email: string;
@@ -99,9 +99,10 @@ export default function TextEditor({ setEntities, setRelationships }: TextEditor
                 height="100%"
                 extensions={[javascript({ jsx: true })]}
                 onChange={onChange}
-                className="min-h-[564px]"
+                theme={vscodeDark}
+                className="w-full h-full"
             />
-            <Button onClick={handleVisualize}>Visualize</Button>
+            <Button className="p-2 bg-gray-800 sticky bottom-0" onClick={handleVisualize}>Visualize</Button>
         </div>
     );
 }

@@ -10,8 +10,8 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
     const [isSpacePressed, setIsSpacePressed] = useState(false)
     const [isPanning, setIsPanning] = useState(false)
     const [panStart, setPanStart] = useState({ x: 0, y: 0 })
-    const [hoveredProperty, setHoveredProperty] = useState<{ entity: Entity, index: number } | null>(null)
-
+    const [hoveredProperty, setHoveredProperty] = useState<{ entity: Entity; propertyIndex: number } | null>(null)
+    const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null)
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -23,7 +23,6 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
         function drawEntities() {
             if (!ctx) return
             if (!canvas) return
-
             ctx.clearRect(0, 0, canvas.width, canvas.height)
             ctx.save()
             ctx.translate(pan.x, pan.y)
@@ -33,6 +32,13 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
                 // Entity background
                 ctx.fillStyle = '#2D2D2D'
                 ctx.fillRect(entity.x, entity.y, entity.width, entity.height)
+
+                // Selected entity border
+                if (selectedEntity === entity) {
+                    ctx.strokeStyle = '#3B82F6'
+                    ctx.lineWidth = 2
+                    ctx.strokeRect(entity.x - 2, entity.y - 2, entity.width + 4, entity.height + 4)
+                }
 
                 // Entity name background
                 ctx.fillStyle = '#1E1E1E'
@@ -47,20 +53,25 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
                 ctx.font = '14px Arial'
                 entity.properties.forEach((prop, i) => {
                     const y = entity.y + 55 + i * 30
-                    if (hoveredProperty && hoveredProperty.entity === entity && hoveredProperty.index === i) {
+
+                    // Hovered property highlight
+                    if (hoveredProperty && hoveredProperty.entity === entity && hoveredProperty.propertyIndex === i) {
                         ctx.fillStyle = '#444444'
                         ctx.fillRect(entity.x, y - 20, entity.width, 30)
                     }
+
                     ctx.fillStyle = '#BBBBBB'
                     ctx.fillText(prop.name, entity.x + 10, y)
                     ctx.fillStyle = '#888888'
                     ctx.fillText(prop.type, entity.x + entity.width / 2 + 10, y)
+
+           
                 })
 
                 // Key icon for the first property (assuming it's the ID)
                 if (entity.properties.length > 0) {
                     ctx.fillStyle = '#BBBBBB'
-                    ctx.font = '10px Arial'
+                    ctx.font = '12px Arial'
                     ctx.fillText('🔑', entity.x + entity.width - 25, entity.y + 55)
                 }
             })
@@ -125,12 +136,22 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
             )
 
             if (clickedEntity) {
+                setSelectedEntity(clickedEntity)
                 setDraggedEntity(clickedEntity)
                 setDragOffset({ x: x - clickedEntity.x, y: y - clickedEntity.y })
+            } else {
+                setSelectedEntity(null)
             }
+
+            drawEntities()
         }
 
         function handleMouseMove(e: MouseEvent) {
+            if (!canvas) return
+            const rect = canvas.getBoundingClientRect()
+            const x = (e.clientX - rect.left - pan.x) / zoom
+            const y = (e.clientY - rect.top - pan.y) / zoom
+
             if (isPanning) {
                 const newPan = {
                     x: e.clientX - panStart.x,
@@ -142,34 +163,30 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
             }
 
             if (draggedEntity) {
-                if (!canvas) return
-                const rect = canvas.getBoundingClientRect()
-                const x = (e.clientX - rect.left - pan.x) / zoom
-                const y = (e.clientY - rect.top - pan.y) / zoom
-
                 draggedEntity.x = x - dragOffset.x
                 draggedEntity.y = y - dragOffset.y
-
                 drawEntities()
-            } else {
-                if (!canvas) return
-                const rect = canvas.getBoundingClientRect()
-                const x = (e.clientX - rect.left - pan.x) / zoom
-                const y = (e.clientY - rect.top - pan.y) / zoom
-
-                let found = false
-                entities.forEach(entity => {
-                    entity.properties.forEach((prop, i) => {
-                        const propY = entity.y + 55 + i * 30
-                        if (x >= entity.x && x <= entity.x + entity.width && y >= propY - 20 && y <= propY + 10) {
-                            setHoveredProperty({ entity, index: i })
-                            found = true
-                        }
-                    })
-                })
-                if (!found) setHoveredProperty(null)
-                drawEntities()
+                return
             }
+
+            // Check for property hover
+            let found = false
+            for (const entity of entities) {
+                if (x >= entity.x && x <= entity.x + entity.width && y >= entity.y + 30 && y <= entity.y + entity.height) {
+                    const propertyIndex = Math.floor((y - entity.y - 30) / 30)
+                    if (propertyIndex >= 0 && propertyIndex < entity.properties.length) {
+                        setHoveredProperty({ entity, propertyIndex })
+                        found = true
+                        break
+                    }
+                }
+            }
+
+            if (!found && hoveredProperty) {
+                setHoveredProperty(null)
+            }
+
+            drawEntities()
         }
 
         function handleMouseUp() {
@@ -250,11 +267,10 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
             window.removeEventListener('keydown', handleKeyDown)
             window.removeEventListener('keyup', handleKeyUp)
         }
-    }, [entities, relationships, draggedEntity, zoom, pan, isSpacePressed, isPanning])
+    }, [entities, relationships, draggedEntity, zoom, pan, isSpacePressed, isPanning, hoveredProperty, selectedEntity])
 
     return canvasRef
 }
-
 interface EntityVisualizerProps {
     entities: Entity[]
     relationships: Relationship[]
@@ -262,7 +278,30 @@ interface EntityVisualizerProps {
 
 export default function EntityVisualizer({ entities, relationships }: EntityVisualizerProps) {
     const canvasRef = useCanvas(entities, relationships)
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+            // Ajustar el tamaño del canvas al tamaño del contenedor
+            const resizeCanvas = () => {
+                const parent = canvas.parentElement;
+                if (parent) {
+                    canvas.width = parent.clientWidth;
+                    canvas.height = parent.clientHeight;
+                }
+            };
+
+            // Ajustar el tamaño al cargar la página y cuando cambie el tamaño de la ventana
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            return () => {
+                window.removeEventListener('resize', resizeCanvas);
+            };
+        }
+    }, [canvasRef]);
+
     return (
-        <canvas ref={canvasRef} width={1492} height={506} className="border border-gray-300" />
+        <canvas ref={canvasRef} width={1492} height={506} className="" />
     )
 }

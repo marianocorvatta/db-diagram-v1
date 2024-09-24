@@ -12,7 +12,7 @@ function App() {
       <div className="w-1/4 p-4">
         <TextEditor setEntities={setEntities} setRelationships={setRelationships} />
       </div>
-      <div className="w-3/4 p-4 bg-gray-800">
+      <div className="w-3/4 p-4 bg-gray-800 h-full">
         <EntityVisualizer entities={entities} relationships={relationships} />
       </div>
     </div>
