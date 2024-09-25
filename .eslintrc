@@ -1,0 +1,41 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "project": ["./tsconfig.json"]
+    },
+    "plugins": ["@typescript-eslint", "testing-library"],
+    "extends": [
+      "next/core-web-vitals",
+      "eslint:recommended",
+      "plugin:react/recommended",
+      "plugin:react-hooks/recommended",
+      "plugin:react/jsx-runtime",
+      "plugin:prettier/recommended",
+      "plugin:testing-library/react",
+      "plugin:@tanstack/eslint-plugin-query/recommended"
+    ],
+    "rules": {
+      "testing-library/await-async-query": "off",
+      "testing-library/no-await-sync-query": "off",
+      "testing-library/no-debugging-utils": "off",
+      "testing-library/no-dom-import": "off",
+      "react/prop-types": "off",
+      "prettier/prettier": "warn",
+      "curly": "error"
+    },
+    "overrides": [
+      {
+        "files": ["**/*.ts", "**/*.tsx"],
+        "extends": ["plugin:@typescript-eslint/recommended"]
+      },
+      {
+        "files": [
+          "**/__tests__/**/*.[jt]s?(x)",
+          "**/?(*.)+(spec|test).[jt]s?(x)"
+        ],
+        "extends": ["plugin:testing-library/react"]
+      }
+    ]
+  }
+  

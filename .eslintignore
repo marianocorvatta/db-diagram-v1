@@ -1,0 +1,7 @@
+node_modules/
+dist/
+src/node_modules/
+src-tauri/
+public/
+package-lock.json
+.prettierignore
