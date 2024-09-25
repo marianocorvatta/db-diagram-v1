@@ -18,7 +18,7 @@ export interface Relationship {
   to: string
   fromProperty: string
   toProperty: string
-  cardinality: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many';
+  cardinality: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many'
 }
 
 function parseDBML(dbml: string): {
@@ -72,13 +72,13 @@ function parseDBML(dbml: string): {
         const toProperty = refMatch[2]
         const fromProperty = line.split(' ')[0]
 
-        let cardinality: Relationship['cardinality'] = 'one-to-one';
+        let cardinality: Relationship['cardinality'] = 'one-to-one'
         if (type.includes('[]')) {
-          cardinality = 'many-to-one';
+          cardinality = 'many-to-one'
         } else if (name.includes('[]')) {
-          cardinality = 'one-to-many';
+          cardinality = 'one-to-many'
         }
-      
+
         relationships.push({
           from: currentEntity.name,
           to: toTable,
@@ -139,17 +139,19 @@ export default function TextEditor({
     setRelationships(parsedRelationships)
   }
   return (
-    <div className="grid grid-cols-1 min-h-screen">
-      <CodeMirror
-        value={value}
-        height="100%"
-        extensions={[javascript({ jsx: true })]}
-        onChange={onChange}
-        theme={vscodeDark}
-        className="w-full h-full grid-rows-1"
-      />
+    <div className="relative flex flex-col h-full max-h-screen">
+      <div className="flex-1 overflow-y-auto">
+        <CodeMirror
+          value={value}
+          height="100%"
+          extensions={[javascript({ jsx: true })]}
+          onChange={onChange}
+          theme={vscodeDark}
+          className="w-full h-full"
+        />
+      </div>
       <Button
-        className="p-2 bg-gray-800 sticky bottom-0 grid-rows-2"
+        className="p-2 bg-gray-800 absolute bottom-0 w-full"
         onClick={handleVisualize}
       >
         Visualize

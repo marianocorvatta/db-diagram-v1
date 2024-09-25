@@ -2,194 +2,209 @@ import { useEffect, useRef, useState } from 'react'
 import { Entity, Relationship } from '../TextEditor/TextEditor'
 
 function useCanvas(entities: Entity[], relationships: Relationship[]) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [draggedEntity, setDraggedEntity] = useState<Entity | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isSpacePressed, setIsSpacePressed] = useState(false);
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [draggedEntity, setDraggedEntity] = useState<Entity | null>(null)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const [isPanning, setIsPanning] = useState(false)
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [hoveredProperty, setHoveredProperty] = useState<{
-    entity: Entity;
-    propertyIndex: number;
-  } | null>(null);
-  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
+    entity: Entity
+    propertyIndex: number
+  } | null>(null)
+  const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
     function drawEntities() {
-      if (!ctx) return;
-      if (!canvas) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.save();
-      ctx.translate(pan.x, pan.y);
-      ctx.scale(zoom, zoom);
+      if (!ctx) return
+      if (!canvas) return
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.save()
+      ctx.translate(pan.x, pan.y)
+      ctx.scale(zoom, zoom)
 
       // Primero dibujamos las relaciones (flechas)
-      drawRelationships();
+      drawRelationships()
 
       // Luego dibujamos las entidades (cajas), para que las flechas queden por debajo
       entities.forEach((entity) => {
         // Entity background
-        ctx.fillStyle = '#2D2D2D';
-        ctx.fillRect(entity.x, entity.y, entity.width, entity.height);
+        ctx.fillStyle = '#2D2D2D'
+        ctx.fillRect(entity.x, entity.y, entity.width, entity.height)
 
         // Selected entity border
         if (selectedEntity === entity) {
-          ctx.strokeStyle = '#3B82F6';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(entity.x - 2, entity.y - 2, entity.width + 4, entity.height + 4);
+          ctx.strokeStyle = '#3B82F6'
+          ctx.lineWidth = 2
+          ctx.strokeRect(
+            entity.x - 2,
+            entity.y - 2,
+            entity.width + 4,
+            entity.height + 4
+          )
         }
 
         // Entity name background
-        ctx.fillStyle = '#1E1E1E';
-        ctx.fillRect(entity.x, entity.y, entity.width, 30);
+        ctx.fillStyle = '#1E1E1E'
+        ctx.fillRect(entity.x, entity.y, entity.width, 30)
 
         // Entity name
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText(entity.name, entity.x + 10, entity.y + 20);
+        ctx.fillStyle = '#FFFFFF'
+        ctx.font = 'bold 16px Arial'
+        ctx.fillText(entity.name, entity.x + 10, entity.y + 20)
 
         // Properties
-        ctx.font = '14px Arial';
+        ctx.font = '14px Arial'
         entity.properties.forEach((prop, i) => {
-          const y = entity.y + 55 + i * 30;
+          const y = entity.y + 55 + i * 30
 
           // Hovered property highlight
-          if (hoveredProperty && hoveredProperty.entity === entity && hoveredProperty.propertyIndex === i) {
-            ctx.fillStyle = '#444444';
-            ctx.fillRect(entity.x, y - 20, entity.width, 30);
+          if (
+            hoveredProperty &&
+            hoveredProperty.entity === entity &&
+            hoveredProperty.propertyIndex === i
+          ) {
+            ctx.fillStyle = '#444444'
+            ctx.fillRect(entity.x, y - 20, entity.width, 30)
           }
 
-          ctx.fillStyle = '#BBBBBB';
-          ctx.fillText(prop.name, entity.x + 10, y);
-          ctx.fillStyle = '#888888';
-          ctx.fillText(prop.type, entity.x + entity.width / 2 + 10, y);
+          ctx.fillStyle = '#BBBBBB'
+          ctx.fillText(prop.name, entity.x + 10, y)
+          ctx.fillStyle = '#888888'
+          ctx.fillText(prop.type, entity.x + entity.width / 2 + 10, y)
           if (prop.isPrimaryKey) {
-            ctx.fillStyle = '#BBBBBB';
-            ctx.font = '12px Arial';
-            ctx.fillText('🔑', entity.x + entity.width - 25, y);
+            ctx.fillStyle = '#BBBBBB'
+            ctx.font = '12px Arial'
+            ctx.fillText('🔑', entity.x + entity.width - 25, y)
           }
-        });
-      });
+        })
+      })
 
-      ctx.restore();
+      ctx.restore()
     }
 
     function drawRelationships() {
       relationships.forEach((rel) => {
-        const fromEntity = entities.find((e) => e.name === rel.from);
-        const toEntity = entities.find((e) => e.name === rel.to);
+        const fromEntity = entities.find((e) => e.name === rel.from)
+        const toEntity = entities.find((e) => e.name === rel.to)
         if (fromEntity && toEntity) {
-          const fromPropIndex = fromEntity.properties.findIndex((p) => p.name === rel.fromProperty);
-          const toPropIndex = toEntity.properties.findIndex((p) => p.name === rel.toProperty);
+          const fromPropIndex = fromEntity.properties.findIndex(
+            (p) => p.name === rel.fromProperty
+          )
+          const toPropIndex = toEntity.properties.findIndex(
+            (p) => p.name === rel.toProperty
+          )
 
-          let startX, startY, endX, endY;
-          const propertyHeight = 30;
-          const centerOffset = propertyHeight / 2;
+          let startX, startY, endX, endY
+          const propertyHeight = 30
+          const centerOffset = propertyHeight / 2
 
           // Calcula los puntos de inicio y fin centrados
-          startY = fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset;
-          endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset;
+          startY =
+            fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset
+          endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset
 
           // Verifica si las dos entidades están cerca horizontalmente
-          const horizontalOverlap = fromEntity.x < toEntity.x + toEntity.width && toEntity.x < fromEntity.x + fromEntity.width;
-          
+          const horizontalOverlap =
+            fromEntity.x < toEntity.x + toEntity.width &&
+            toEntity.x < fromEntity.x + fromEntity.width
+
           if (horizontalOverlap) {
             // Si están demasiado cerca horizontalmente, ajusta la conexión a los lados opuestos
             if (fromEntity.y < toEntity.y) {
               // De "fromEntity" a "toEntity" por la parte inferior de fromEntity y la parte superior de toEntity
-              startX = fromEntity.x + fromEntity.width / 2;
-              endX = toEntity.x + toEntity.width / 2;
-              startY = fromEntity.y + fromEntity.height; // Parte inferior de fromEntity
-              endY = toEntity.y; // Parte superior de toEntity
+              startX = fromEntity.x + fromEntity.width / 2
+              endX = toEntity.x + toEntity.width / 2
+              startY = fromEntity.y + fromEntity.height // Parte inferior de fromEntity
+              endY = toEntity.y // Parte superior de toEntity
             } else {
               // De "fromEntity" a "toEntity" por la parte superior de fromEntity y la parte inferior de toEntity
-              startX = fromEntity.x + fromEntity.width / 2;
-              endX = toEntity.x + toEntity.width / 2;
-              startY = fromEntity.y; // Parte superior de fromEntity
-              endY = toEntity.y + toEntity.height; // Parte inferior de toEntity
+              startX = fromEntity.x + fromEntity.width / 2
+              endX = toEntity.x + toEntity.width / 2
+              startY = fromEntity.y // Parte superior de fromEntity
+              endY = toEntity.y + toEntity.height // Parte inferior de toEntity
             }
           } else {
             // Si no están cerca horizontalmente, mantenemos la lógica original
             if (fromEntity.x < toEntity.x) {
-              startX = fromEntity.x + fromEntity.width; // Borde derecho de fromEntity
-              endX = toEntity.x; // Borde izquierdo de toEntity
+              startX = fromEntity.x + fromEntity.width // Borde derecho de fromEntity
+              endX = toEntity.x // Borde izquierdo de toEntity
             } else {
-              startX = fromEntity.x; // Borde izquierdo de fromEntity
-              endX = toEntity.x + toEntity.width; // Borde derecho de toEntity
+              startX = fromEntity.x // Borde izquierdo de fromEntity
+              endX = toEntity.x + toEntity.width // Borde derecho de toEntity
             }
           }
 
-          if (!ctx) return;
+          if (!ctx) return
 
           // Aquí cambiamos el color dependiendo de si la entidad está seleccionada
           if (selectedEntity === fromEntity || selectedEntity === toEntity) {
-            ctx.strokeStyle = '#3B82F6'; // Azul si una de las entidades está seleccionada
+            ctx.strokeStyle = '#3B82F6' // Azul si una de las entidades está seleccionada
           } else {
-            ctx.strokeStyle = '#888888'; // Gris si ninguna entidad está seleccionada
+            ctx.strokeStyle = '#888888' // Gris si ninguna entidad está seleccionada
           }
 
           // Dibujo de la línea quebrada con ajuste para evitar que pase por debajo de las entidades
-          ctx.beginPath();
-          ctx.moveTo(startX, startY);
+          ctx.beginPath()
+          ctx.moveTo(startX, startY)
 
           // Dibujar el segmento horizontal hasta el punto medio
-          const midX = (startX + endX) / 2;
-          ctx.lineTo(midX, startY); // Línea horizontal desde el punto de inicio hasta el medio
+          const midX = (startX + endX) / 2
+          ctx.lineTo(midX, startY) // Línea horizontal desde el punto de inicio hasta el medio
 
           // Dibujar el segmento vertical
-          ctx.lineTo(midX, endY); // Línea vertical desde el medio hasta el nivel del punto de fin
+          ctx.lineTo(midX, endY) // Línea vertical desde el medio hasta el nivel del punto de fin
 
           // Dibujar el segmento final horizontal hasta el destino
-          ctx.lineTo(endX, endY); // Línea horizontal hasta el destino
-          ctx.stroke();
+          ctx.lineTo(endX, endY) // Línea horizontal hasta el destino
+          ctx.stroke()
 
           // Dibujo de símbolos según la cardinalidad
           if (rel.cardinality === 'one-to-one') {
-            drawCircle(ctx, startX, startY);
-            drawCircle(ctx, endX, endY);
+            drawCircle(ctx, startX, startY)
+            drawCircle(ctx, endX, endY)
           } else if (rel.cardinality === 'one-to-many') {
-            drawCircle(ctx, startX, startY);
-            drawCrowFoot(ctx, endX, endY);
+            drawCircle(ctx, startX, startY)
+            drawCrowFoot(ctx, endX, endY)
           } else if (rel.cardinality === 'many-to-one') {
-            drawCrowFoot(ctx, startX, startY);
-            drawCircle(ctx, endX, endY);
+            drawCrowFoot(ctx, startX, startY)
+            drawCircle(ctx, endX, endY)
           } else if (rel.cardinality === 'many-to-many') {
-            drawCrowFoot(ctx, startX, startY);
-            drawCrowFoot(ctx, endX, endY);
+            drawCrowFoot(ctx, startX, startY)
+            drawCrowFoot(ctx, endX, endY)
           }
         }
-      });
+      })
     }
     function drawCircle(ctx: CanvasRenderingContext2D, x: number, y: number) {
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, 2 * Math.PI);
-      ctx.stroke();
-    }
-    
-    function drawCrowFoot(ctx: CanvasRenderingContext2D, x: number, y: number) {
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - 10, y - 5);
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - 10, y + 5);
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - 10, y);
-      ctx.stroke();
+      ctx.beginPath()
+      ctx.arc(x, y, 5, 0, 2 * Math.PI)
+      ctx.stroke()
     }
 
-    drawEntities();
+    function drawCrowFoot(ctx: CanvasRenderingContext2D, x: number, y: number) {
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo(x - 10, y - 5)
+      ctx.moveTo(x, y)
+      ctx.lineTo(x - 10, y + 5)
+      ctx.moveTo(x, y)
+      ctx.lineTo(x - 10, y)
+      ctx.stroke()
+    }
+
+    drawEntities()
 
     // Event listeners remain unchanged
     // Handle mouse down, mouse move, mouse up, etc.
-
 
     function handleMouseDown(e: MouseEvent) {
       if (isSpacePressed) {
@@ -350,7 +365,6 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-    
   }, [
     entities,
     relationships,
@@ -361,9 +375,9 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
     isPanning,
     hoveredProperty,
     selectedEntity,
-  ]);
+  ])
 
-  return canvasRef;
+  return canvasRef
 }
 interface EntityVisualizerProps {
   entities: Entity[]
