@@ -93,16 +93,16 @@ export default function TextEditor({ setEntities, setRelationships }: TextEditor
         setRelationships(parsedRelationships)
     }
     return (
-        <div className="flex flex-col min-h-[600px]">
+        <div className="grid grid-cols-1 min-h-screen">
             <CodeMirror
                 value={value}
                 height="100%"
                 extensions={[javascript({ jsx: true })]}
                 onChange={onChange}
                 theme={vscodeDark}
-                className="w-full h-full"
+                className="w-full h-full grid-rows-1"
             />
-            <Button className="p-2 bg-gray-800 sticky bottom-0" onClick={handleVisualize}>Visualize</Button>
+            <Button className="p-2 bg-gray-800 sticky bottom-0 grid-rows-2" onClick={handleVisualize}>Visualize</Button>
         </div>
     );
 }
