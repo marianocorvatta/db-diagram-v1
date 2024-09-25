@@ -18,6 +18,7 @@ export interface Relationship {
   to: string
   fromProperty: string
   toProperty: string
+  cardinality: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many';
 }
 
 function parseDBML(dbml: string): {
@@ -70,11 +71,20 @@ function parseDBML(dbml: string): {
         const toTable = refMatch[1]
         const toProperty = refMatch[2]
         const fromProperty = line.split(' ')[0]
+
+        let cardinality: Relationship['cardinality'] = 'one-to-one';
+        if (type.includes('[]')) {
+          cardinality = 'many-to-one';
+        } else if (name.includes('[]')) {
+          cardinality = 'one-to-many';
+        }
+      
         relationships.push({
           from: currentEntity.name,
           to: toTable,
           fromProperty: fromProperty,
           toProperty: toProperty,
+          cardinality: cardinality,
         })
       }
     }
@@ -99,6 +109,13 @@ Table Product {
   name varchar
   price float
   user_id uuid [ref: > User.id]
+}
+
+Table Servicio {
+  id uuid [pk]
+  name varchar
+  price float
+  productId uuid [ref: > Product.id]
 }`
 
 interface TextEditorProps {

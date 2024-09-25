@@ -81,7 +81,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
 
       ctx.restore();
     }
-
+    
     function drawRelationships() {
       relationships.forEach((rel) => {
         const fromEntity = entities.find((e) => e.name === rel.from);
@@ -89,53 +89,80 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
         if (fromEntity && toEntity) {
           const fromPropIndex = fromEntity.properties.findIndex((p) => p.name === rel.fromProperty);
           const toPropIndex = toEntity.properties.findIndex((p) => p.name === rel.toProperty);
-
-          // Determinar la posición de inicio y fin de la flecha según la posición relativa de las entidades
+    
           let startX, startY, endX, endY;
-
+          const propertyHeight = 30;
+          const centerOffset = propertyHeight / 2;
+    
           if (fromEntity.x < toEntity.x) {
-            // Si la entidad de origen está a la izquierda de la de destino
-            startX = fromEntity.x + fromEntity.width; // Borde derecho de la entidad de origen
-            startY = fromEntity.y + fromPropIndex * 30 + 40; // Alineado con la propiedad
-            endX = toEntity.x; // Borde izquierdo de la entidad de destino
-            endY = toEntity.y + toPropIndex * 30 + 40; // Alineado con la propiedad
+            startX = fromEntity.x + fromEntity.width;
+            startY = fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset; // Centrado
+            endX = toEntity.x;
+            endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset; // Centrado
           } else {
-            // Si la entidad de origen está a la derecha de la de destino
-            startX = fromEntity.x; // Borde izquierdo de la entidad de origen
-            startY = fromEntity.y + fromPropIndex * 30 + 40; // Alineado con la propiedad
-            endX = toEntity.x + toEntity.width; // Borde derecho de la entidad de destino
-            endY = toEntity.y + toPropIndex * 30 + 40; // Alineado con la propiedad
+            startX = fromEntity.x;
+            startY = fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset; // Centrado
+            endX = toEntity.x + toEntity.width;
+            endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset; // Centrado
           }
+    
           if (!ctx) return;
-
+    
           // Aquí cambiamos el color dependiendo de si la entidad está seleccionada
           if (selectedEntity === fromEntity || selectedEntity === toEntity) {
             ctx.strokeStyle = '#3B82F6'; // Azul si una de las entidades está seleccionada
           } else {
             ctx.strokeStyle = '#888888'; // Gris si ninguna entidad está seleccionada
           }
-
-          // Dibujo de la línea
+    
+          // Dibujo de la línea quebrada (primero horizontal y luego vertical)
           ctx.beginPath();
           ctx.moveTo(startX, startY);
-          ctx.lineTo(endX, endY);
+    
+          // Dibujar la parte horizontal
+          const midX = (startX + endX) / 2; // Punto medio para dividir horizontalmente
+          ctx.lineTo(midX, startY); // Ir horizontalmente hasta el punto medio
+    
+          // Dibujar la parte vertical
+          ctx.lineTo(midX, endY); // Ir verticalmente hasta la altura de la propiedad de destino
+    
+          // Dibujar la parte horizontal hasta el destino
+          ctx.lineTo(endX, endY); // Ir horizontalmente hasta el destino
           ctx.stroke();
-
-          // Dibujo de la flecha
-          const angle = Math.atan2(endY - startY, endX - startX);
-          ctx.save();
-          ctx.translate(endX, endY);
-          ctx.rotate(angle);
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(-10, -5);
-          ctx.lineTo(-10, 5);
-          ctx.closePath();
-          ctx.fillStyle = ctx.strokeStyle; // Usamos el mismo color de la línea para la flecha
-          ctx.fill();
-          ctx.restore();
+    
+          // Dibujo de símbolos según la cardinalidad
+          if (rel.cardinality === 'one-to-one') {
+            drawCircle(ctx, startX, startY);
+            drawCircle(ctx, endX, endY);
+          } else if (rel.cardinality === 'one-to-many') {
+            drawCircle(ctx, startX, startY);
+            drawCrowFoot(ctx, endX, endY);
+          } else if (rel.cardinality === 'many-to-one') {
+            drawCrowFoot(ctx, startX, startY);
+            drawCircle(ctx, endX, endY);
+          } else if (rel.cardinality === 'many-to-many') {
+            drawCrowFoot(ctx, startX, startY);
+            drawCrowFoot(ctx, endX, endY);
+          }
         }
       });
+    }
+    
+    function drawCircle(ctx: CanvasRenderingContext2D, x: number, y: number) {
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+    
+    function drawCrowFoot(ctx: CanvasRenderingContext2D, x: number, y: number) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 10, y - 5);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 10, y + 5);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 10, y);
+      ctx.stroke();
     }
 
     drawEntities();
