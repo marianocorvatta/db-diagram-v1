@@ -42,7 +42,7 @@ function parseDBML(dbml: string): {
         x: 50 + (entities.length % 3) * 280,
         y: 50 + Math.floor(entities.length / 3) * 220,
         width: 260,
-        height: 100,
+        height: 38,
       }
     } else if (
       currentEntity &&
