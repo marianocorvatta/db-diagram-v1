@@ -76,14 +76,12 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
           ctx.fillText(prop.name, entity.x + 10, y)
           ctx.fillStyle = '#888888'
           ctx.fillText(prop.type, entity.x + entity.width / 2 + 10, y)
+          if(prop.isPrimaryKey) {
+            ctx.fillStyle = '#BBBBBB'
+            ctx.font = '12px Arial'
+            ctx.fillText('🔑', entity.x + entity.width - 25, y)
+          }
         })
-
-        // Key icon for the first property (assuming it's the ID)
-        if (entity.properties.length > 0) {
-          ctx.fillStyle = '#BBBBBB'
-          ctx.font = '12px Arial'
-          ctx.fillText('🔑', entity.x + entity.width - 25, entity.y + 55)
-        }
       })
 
       // Draw relationships

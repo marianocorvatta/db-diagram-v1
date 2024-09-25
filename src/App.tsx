@@ -19,7 +19,7 @@ function App() {
       direction="horizontal"
       className="min-h-screen bg-gray-900 overflow-x-hidden"
     >
-      <ResizablePanel defaultSize={20}>
+      <ResizablePanel defaultSize={30}>
         <div className="h-full">
           <TextEditor
             setEntities={setEntities}
@@ -28,7 +28,7 @@ function App() {
         </div>
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={80}>
+      <ResizablePanel defaultSize={70}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel defaultSize={90}>
             <div className="flex h-full items-center justify-center p-6 bg-gray-800">

@@ -6,7 +6,7 @@ import { vscodeDark } from '@uiw/codemirror-theme-vscode'
 
 export interface Entity {
   name: string
-  properties: Array<{ name: string; type: string }>
+  properties: Array<{ name: string; type: string; isPrimaryKey?: boolean }>
   x: number
   y: number
   width: number
@@ -20,65 +20,86 @@ export interface Relationship {
   toProperty: string
 }
 
-function parseEntities(code: string): {
+function parseDBML(dbml: string): {
   entities: Entity[]
   relationships: Relationship[]
 } {
-  const interfaces = code.split('interface')
-  const entities: Entity[] = interfaces.slice(1).map((interfaceStr, index) => {
-    const [name, ...rest] = interfaceStr.split('{')
-    const properties = rest
-      .join('{')
-      .split('}')[0]
-      .split(';')
-      .map((prop) => {
-        const [propName, propType] = prop.split(':').map((p) => p.trim())
-        return { name: propName, type: propType }
-      })
-      .filter((prop) => prop.name && prop.type)
-    return {
-      name: name.trim(),
-      properties,
-      x: 50 + (index % 3) * 280,
-      y: 50 + Math.floor(index / 3) * 220,
-      width: 260,
-      height: 40 + properties.length * 30,
+  const lines = dbml.split('\n').map((line) => line.trim())
+  const entities: Entity[] = []
+  const relationships: Relationship[] = []
+
+  let currentEntity: Entity | null = null
+
+  lines.forEach((line) => {
+    if (line.startsWith('Table')) {
+      if (currentEntity) {
+        entities.push(currentEntity)
+      }
+      const tableName = line.split(' ')[1]
+      currentEntity = {
+        name: tableName,
+        properties: [],
+        x: 50 + (entities.length % 3) * 280,
+        y: 50 + Math.floor(entities.length / 3) * 220,
+        width: 260,
+        height: 100,
+      }
+    } else if (
+      currentEntity &&
+      !line.includes('{') &&
+      !line.includes('}') &&
+      line !== '' &&
+      !line.includes('[ref:')
+    ) {
+      const [name, type] = line.split(' ').slice(0, 2)
+      const isPrimaryKey = line.includes('[pk]')
+      if (name && type) {
+        currentEntity.properties.push({ name, type, isPrimaryKey })
+        currentEntity.height += 30
+      }
+    } else if (currentEntity && line.includes('[ref:')) {
+      const [name, typeAndRef] = line.split(' ').slice(0, 2)
+      const [type] = typeAndRef.split('[')
+
+      if (name && type) {
+        currentEntity.properties.push({ name, type })
+        currentEntity.height += 30
+      }
+      const refMatch = line.match(/\[ref: > (\w+)\.(\w+)\]/)
+      if (refMatch && currentEntity) {
+        const toTable = refMatch[1]
+        const toProperty = refMatch[2]
+        const fromProperty = line.split(' ')[0]
+        relationships.push({
+          from: currentEntity.name,
+          to: toTable,
+          fromProperty: fromProperty,
+          toProperty: toProperty,
+        })
+      }
     }
   })
 
-  const relationships: Relationship[] = []
-  entities.forEach((entity) => {
-    entity.properties.forEach((prop) => {
-      const relatedEntity = entities.find(
-        (e) => e.name === prop.type.replace('[]', '')
-      )
-      if (relatedEntity) {
-        relationships.push({
-          from: entity.name,
-          to: relatedEntity.name,
-          fromProperty: prop.name,
-          toProperty: 'id',
-        })
-      }
-    })
-  })
+  if (currentEntity) {
+    entities.push(currentEntity)
+  }
 
   return { entities, relationships }
 }
 
-const baseCode = `interface User {
-  id: string;
-  name: string;
-  email: string;
-  products: Product[];
+const baseCode = `Table User {
+  id uuid [pk]
+  name varchar
+  email varchar
+  createdAt timestamp
 }
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-}
-`
+Table Product {
+  id uuid [pk]
+  name varchar
+  price float
+  user_id uuid [ref: > User.id]
+}`
 
 interface TextEditorProps {
   setEntities: (entities: Entity[]) => void
@@ -91,13 +112,12 @@ export default function TextEditor({
 }: TextEditorProps) {
   const [value, setValue] = useState(baseCode)
   const onChange = useCallback((val: string) => {
-    console.log('val:', val)
     setValue(val)
   }, [])
 
   const handleVisualize = () => {
     const { entities: parsedEntities, relationships: parsedRelationships } =
-      parseEntities(value)
+      parseDBML(value)
     setEntities(parsedEntities)
     setRelationships(parsedRelationships)
   }
