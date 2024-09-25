@@ -67,17 +67,16 @@ function parseEntities(code: string): {
 }
 
 const baseCode = `interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   products: Product[];
 }
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
   price: number;
-  owner: User;
 }
 `
 
