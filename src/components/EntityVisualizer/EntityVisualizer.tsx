@@ -81,7 +81,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
 
       ctx.restore();
     }
-    
+
     function drawRelationships() {
       relationships.forEach((rel) => {
         const fromEntity = entities.find((e) => e.name === rel.from);
@@ -89,47 +89,68 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
         if (fromEntity && toEntity) {
           const fromPropIndex = fromEntity.properties.findIndex((p) => p.name === rel.fromProperty);
           const toPropIndex = toEntity.properties.findIndex((p) => p.name === rel.toProperty);
-    
+
           let startX, startY, endX, endY;
           const propertyHeight = 30;
           const centerOffset = propertyHeight / 2;
-    
-          if (fromEntity.x < toEntity.x) {
-            startX = fromEntity.x + fromEntity.width;
-            startY = fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset; // Centrado
-            endX = toEntity.x;
-            endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset; // Centrado
+
+          // Calcula los puntos de inicio y fin centrados
+          startY = fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset;
+          endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset;
+
+          // Verifica si las dos entidades están cerca horizontalmente
+          const horizontalOverlap = fromEntity.x < toEntity.x + toEntity.width && toEntity.x < fromEntity.x + fromEntity.width;
+          
+          if (horizontalOverlap) {
+            // Si están demasiado cerca horizontalmente, ajusta la conexión a los lados opuestos
+            if (fromEntity.y < toEntity.y) {
+              // De "fromEntity" a "toEntity" por la parte inferior de fromEntity y la parte superior de toEntity
+              startX = fromEntity.x + fromEntity.width / 2;
+              endX = toEntity.x + toEntity.width / 2;
+              startY = fromEntity.y + fromEntity.height; // Parte inferior de fromEntity
+              endY = toEntity.y; // Parte superior de toEntity
+            } else {
+              // De "fromEntity" a "toEntity" por la parte superior de fromEntity y la parte inferior de toEntity
+              startX = fromEntity.x + fromEntity.width / 2;
+              endX = toEntity.x + toEntity.width / 2;
+              startY = fromEntity.y; // Parte superior de fromEntity
+              endY = toEntity.y + toEntity.height; // Parte inferior de toEntity
+            }
           } else {
-            startX = fromEntity.x;
-            startY = fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset; // Centrado
-            endX = toEntity.x + toEntity.width;
-            endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset; // Centrado
+            // Si no están cerca horizontalmente, mantenemos la lógica original
+            if (fromEntity.x < toEntity.x) {
+              startX = fromEntity.x + fromEntity.width; // Borde derecho de fromEntity
+              endX = toEntity.x; // Borde izquierdo de toEntity
+            } else {
+              startX = fromEntity.x; // Borde izquierdo de fromEntity
+              endX = toEntity.x + toEntity.width; // Borde derecho de toEntity
+            }
           }
-    
+
           if (!ctx) return;
-    
+
           // Aquí cambiamos el color dependiendo de si la entidad está seleccionada
           if (selectedEntity === fromEntity || selectedEntity === toEntity) {
             ctx.strokeStyle = '#3B82F6'; // Azul si una de las entidades está seleccionada
           } else {
             ctx.strokeStyle = '#888888'; // Gris si ninguna entidad está seleccionada
           }
-    
-          // Dibujo de la línea quebrada (primero horizontal y luego vertical)
+
+          // Dibujo de la línea quebrada con ajuste para evitar que pase por debajo de las entidades
           ctx.beginPath();
           ctx.moveTo(startX, startY);
-    
-          // Dibujar la parte horizontal
-          const midX = (startX + endX) / 2; // Punto medio para dividir horizontalmente
-          ctx.lineTo(midX, startY); // Ir horizontalmente hasta el punto medio
-    
-          // Dibujar la parte vertical
-          ctx.lineTo(midX, endY); // Ir verticalmente hasta la altura de la propiedad de destino
-    
-          // Dibujar la parte horizontal hasta el destino
-          ctx.lineTo(endX, endY); // Ir horizontalmente hasta el destino
+
+          // Dibujar el segmento horizontal hasta el punto medio
+          const midX = (startX + endX) / 2;
+          ctx.lineTo(midX, startY); // Línea horizontal desde el punto de inicio hasta el medio
+
+          // Dibujar el segmento vertical
+          ctx.lineTo(midX, endY); // Línea vertical desde el medio hasta el nivel del punto de fin
+
+          // Dibujar el segmento final horizontal hasta el destino
+          ctx.lineTo(endX, endY); // Línea horizontal hasta el destino
           ctx.stroke();
-    
+
           // Dibujo de símbolos según la cardinalidad
           if (rel.cardinality === 'one-to-one') {
             drawCircle(ctx, startX, startY);
@@ -147,7 +168,6 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
         }
       });
     }
-    
     function drawCircle(ctx: CanvasRenderingContext2D, x: number, y: number) {
       ctx.beginPath();
       ctx.arc(x, y, 5, 0, 2 * Math.PI);
@@ -378,5 +398,5 @@ export default function EntityVisualizer({
     }
   }, [canvasRef])
 
-  return <canvas ref={canvasRef} width={1492} height={506} className="" />
+  return <canvas ref={canvasRef} width={1492} height={1492} className="" />
 }
