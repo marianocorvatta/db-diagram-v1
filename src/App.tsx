@@ -38,12 +38,12 @@ function App() {
               />
             </div>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          {/* <ResizableHandle withHandle />
           <ResizablePanel defaultSize={10} maxSize={10}>
             <div className="flex h-full items-center justify-center p-6">
               <span className="font-semibold">footer</span>
             </div>
-          </ResizablePanel>
+          </ResizablePanel> */}
         </ResizablePanelGroup>
       </ResizablePanel>
     </ResizablePanelGroup>
