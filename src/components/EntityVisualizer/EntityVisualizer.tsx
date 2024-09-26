@@ -91,12 +91,141 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
       ctx.restore()
     }
 
+    // function drawRelationships() {
+    //   const cornerRadius = 4 // Adjust this value for the roundness of corners
+
+    //   relationships.forEach((rel) => {
+    //     const fromEntity = entities.find((e) => e.name === rel.from)
+    //     const toEntity = entities.find((e) => e.name === rel.to)
+    //     if (fromEntity && toEntity) {
+    //       const fromPropIndex = fromEntity.properties.findIndex(
+    //         (p) => p.name === rel.fromProperty
+    //       )
+    //       const toPropIndex = toEntity.properties.findIndex(
+    //         (p) => p.name === rel.toProperty
+    //       )
+
+    //       let startX, startY, endX, endY
+    //       const propertyHeight = 30
+    //       const centerOffset = propertyHeight / 2
+
+    //       // Calculate centered start and end points
+    //       startY =
+    //         fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset
+    //       endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset
+
+    //       const horizontalOverlap =
+    //         fromEntity.x < toEntity.x + toEntity.width &&
+    //         toEntity.x < fromEntity.x + fromEntity.width
+
+    //       if (horizontalOverlap) {
+    //         if (fromEntity.y < toEntity.y) {
+    //           startX = fromEntity.x + fromEntity.width / 2
+    //           endX = toEntity.x + toEntity.width / 2
+    //           startY = fromEntity.y + fromEntity.height
+    //           endY = toEntity.y
+    //         } else {
+    //           startX = fromEntity.x + fromEntity.width / 2
+    //           endX = toEntity.x + toEntity.width / 2
+    //           startY = fromEntity.y
+    //           endY = toEntity.y + toEntity.height
+    //         }
+    //       } else {
+    //         if (fromEntity.x < toEntity.x) {
+    //           startX = fromEntity.x + fromEntity.width // Right edge of fromEntity
+    //           endX = toEntity.x // Left edge of toEntity
+    //         } else {
+    //           startX = fromEntity.x // Left edge of fromEntity
+    //           endX = toEntity.x + toEntity.width // Right edge of toEntity
+    //         }
+    //       }
+
+    //       if (!ctx) return
+
+    //       // Set color based on selected entities
+    //       ctx.strokeStyle =
+    //         selectedEntity === fromEntity || selectedEntity === toEntity
+    //           ? '#3B82F6'
+    //           : '#888888'
+
+    //       // Drawing lines with smooth rounded corners
+    //       ctx.beginPath()
+    //       ctx.moveTo(startX, startY)
+
+    //       const midX = (startX + endX) / 2
+    //       const midY = (startY + endY) / 2
+
+    //       const curveDirectionY = startY < endY ? 1 : -1
+    //       // const curveDirectionX = startX < endX ? 1 : -1
+
+    //       if (curveDirectionY === 1) {
+    //         // abajo
+    //         // First horizontal segment
+    //         ctx.lineTo(midX + 4, startY)
+
+    //         // First curve with bezierCurveTo for smooth transition
+    //         ctx.bezierCurveTo(midX, startY + 1, midX, startY, midX, midY)
+
+    //         // Vertical segment
+    //         ctx.lineTo(midX, endY - 4)
+
+    //         // Second curve with bezierCurveTo
+    //         ctx.bezierCurveTo(
+    //           midX - 1,
+    //           endY - 1,
+    //           midX,
+    //           endY + 1,
+    //           midX - 40,
+    //           endY
+    //         )
+
+    //         // Last horizontal segment
+    //         ctx.lineTo(endX, endY)
+    //         ctx.stroke()
+    //       } else {
+    //         // arriba
+    //         // First horizontal segment
+    //         ctx.lineTo(midX + 4, startY)
+
+    //         // First curve with bezierCurveTo for smooth transition
+    //         ctx.bezierCurveTo(midX, startY, midX, startY, midX, midY)
+
+    //         // Vertical segment
+    //         ctx.lineTo(midX, endY + 4)
+
+    //         // Second curve with bezierCurveTo
+    //         ctx.bezierCurveTo(midX, endY, midX, endY, midX - cornerRadius, endY)
+
+    //         // Last horizontal segment
+    //         ctx.lineTo(endX, endY)
+    //         ctx.stroke()
+    //       }
+
+    //       // Draw cardinality symbols (optional, can adjust based on your needs)
+    //       if (rel.cardinality === 'one-to-one') {
+    //         drawCircle(ctx, startX, startY)
+    //         drawCircle(ctx, endX, endY)
+    //       } else if (rel.cardinality === 'one-to-many') {
+    //         drawCircle(ctx, startX, startY)
+    //         drawCrowFoot(ctx, endX, endY)
+    //       } else if (rel.cardinality === 'many-to-one') {
+    //         drawCrowFoot(ctx, startX, startY)
+    //         drawCircle(ctx, endX, endY)
+    //       } else if (rel.cardinality === 'many-to-many') {
+    //         drawCrowFoot(ctx, startX, startY)
+    //         drawCrowFoot(ctx, endX, endY)
+    //       }
+    //     }
+    //   })
+    // }
+
     function drawRelationships() {
-      const cornerRadius = 4 // Adjust this value for the roundness of corners
+      const cornerRadius = 4 // Ajustar este valor para el redondeo de las esquinas
 
       relationships.forEach((rel) => {
         const fromEntity = entities.find((e) => e.name === rel.from)
         const toEntity = entities.find((e) => e.name === rel.to)
+
         if (fromEntity && toEntity) {
           const fromPropIndex = fromEntity.properties.findIndex(
             (p) => p.name === rel.fromProperty
@@ -105,11 +234,15 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
             (p) => p.name === rel.toProperty
           )
 
-          let startX, startY, endX, endY
+          // Asegurarnos de que fromPropIndex y toPropIndex son válidos
+          if (fromPropIndex === -1 || toPropIndex === -1) return
+
+          let startX: number | undefined, startY: number | undefined
+          let endX: number | undefined, endY: number | undefined
           const propertyHeight = 30
           const centerOffset = propertyHeight / 2
 
-          // Calculate centered start and end points
+          // Calcular puntos de inicio y fin centrados
           startY =
             fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset
           endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset
@@ -118,26 +251,42 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
             fromEntity.x < toEntity.x + toEntity.width &&
             toEntity.x < fromEntity.x + fromEntity.width
 
+          // Condiciones para verificar si el elemento "to" está a la derecha o izquierda
+          const isToRight = fromEntity.x < toEntity.x
+          const isToLeft = fromEntity.x > toEntity.x
+
           if (horizontalOverlap) {
+            // Si hay solapamiento horizontal
             if (fromEntity.y < toEntity.y) {
               startX = fromEntity.x + fromEntity.width / 2
               endX = toEntity.x + toEntity.width / 2
-              startY = fromEntity.y + fromEntity.height
-              endY = toEntity.y
+              startY = fromEntity.y + fromEntity.height // Parte inferior de fromEntity
+              endY = toEntity.y // Parte superior de toEntity
             } else {
               startX = fromEntity.x + fromEntity.width / 2
               endX = toEntity.x + toEntity.width / 2
-              startY = fromEntity.y
-              endY = toEntity.y + toEntity.height
+              startY = fromEntity.y // Parte superior de fromEntity
+              endY = toEntity.y + toEntity.height // Parte inferior de toEntity
             }
           } else {
-            if (fromEntity.x < toEntity.x) {
-              startX = fromEntity.x + fromEntity.width // Right edge of fromEntity
-              endX = toEntity.x // Left edge of toEntity
-            } else {
-              startX = fromEntity.x // Left edge of fromEntity
-              endX = toEntity.x + toEntity.width // Right edge of toEntity
+            // Sin solapamiento horizontal
+            if (isToRight) {
+              startX = fromEntity.x + fromEntity.width // Borde derecho de fromEntity
+              endX = toEntity.x // Borde izquierdo de toEntity
+            } else if (isToLeft) {
+              startX = fromEntity.x // Borde izquierdo de fromEntity
+              endX = toEntity.x + toEntity.width // Borde derecho de toEntity
             }
+          }
+
+          // Validar que startX, startY, endX y endY son valores definidos
+          if (
+            startX === undefined ||
+            startY === undefined ||
+            endX === undefined ||
+            endY === undefined
+          ) {
+            return // Si alguna es undefined, salir de la función
           }
 
           if (!ctx) return
@@ -148,7 +297,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
               ? '#3B82F6'
               : '#888888'
 
-          // Drawing lines with smooth rounded corners
+          // Dibujo de líneas con curvas suaves
           ctx.beginPath()
           ctx.moveTo(startX, startY)
 
@@ -156,52 +305,69 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
           const midY = (startY + endY) / 2
 
           const curveDirection = startY < endY ? 1 : -1
-          console.log('curveDirection', curveDirection)
 
           if (curveDirection === 1) {
-            // abajo
-            // First horizontal segment
-            ctx.lineTo(midX + 4, startY)
-
-            // First curve with bezierCurveTo for smooth transition
-            ctx.bezierCurveTo(midX, startY + 1, midX, startY, midX, midY)
-
-            // Vertical segment
-            ctx.lineTo(midX, endY - 4)
-
-            // Second curve with bezierCurveTo
-            ctx.bezierCurveTo(
-              midX - 1,
-              endY - 1,
-              midX,
-              endY + 1,
-              midX - 40,
-              endY
-            )
-
-            // Last horizontal segment
-            ctx.lineTo(endX, endY)
-            ctx.stroke()
+            // Para abajo
+            if (isToRight) {
+              ctx.lineTo(midX - cornerRadius, startY)
+              ctx.bezierCurveTo(midX, startY + 1, midX, startY, midX, midY)
+              ctx.lineTo(midX, endY - 4)
+              ctx.bezierCurveTo(
+                midX + 1,
+                endY + 1,
+                midX,
+                endY - 1,
+                midX + cornerRadius,
+                endY
+              )
+            } else {
+              ctx.lineTo(midX + cornerRadius, startY)
+              ctx.bezierCurveTo(midX, startY + 1, midX, startY, midX, midY)
+              ctx.lineTo(midX, endY - 4)
+              ctx.bezierCurveTo(
+                midX - 1,
+                endY - 1,
+                midX,
+                endY + 1,
+                midX - cornerRadius,
+                endY
+              )
+            }
           } else {
-            // arriba
-            // First horizontal segment
-            ctx.lineTo(midX + 4, startY)
-
-            // First curve with bezierCurveTo for smooth transition
-            ctx.bezierCurveTo(midX, startY, midX, startY, midX, midY)
-
-            // Vertical segment
-            ctx.lineTo(midX, endY + 4)
-
-            // Second curve with bezierCurveTo
-            ctx.bezierCurveTo(midX, endY, midX, endY, midX - cornerRadius, endY)
-
-            // Last horizontal segment
-            ctx.lineTo(endX, endY)
-            ctx.stroke()
+            if (isToRight) {
+              // Para arriba
+              ctx.lineTo(midX + cornerRadius, startY)
+              ctx.bezierCurveTo(midX + 8, startY, midX + 10, startY, midX + 5, midY)
+              ctx.lineTo(midX, endY)
+              ctx.bezierCurveTo(
+                midX,
+                endY,
+                midX,
+                endY,
+                midX,
+                endY
+              )
+            } else {
+              // Para arriba
+              ctx.lineTo(midX + cornerRadius, startY)
+              ctx.bezierCurveTo(midX, startY, midX, startY, midX, midY)
+              ctx.lineTo(midX, endY + 4)
+              ctx.bezierCurveTo(
+                midX,
+                endY,
+                midX,
+                endY,
+                midX - cornerRadius,
+                endY
+              )
+            }
           }
 
-          // Draw cardinality symbols (optional, can adjust based on your needs)
+          // Último segmento horizontal
+          ctx.lineTo(endX, endY)
+          ctx.stroke()
+
+          // Dibujar símbolos de cardinalidad
           if (rel.cardinality === 'one-to-one') {
             drawCircle(ctx, startX, startY)
             drawCircle(ctx, endX, endY)
@@ -218,6 +384,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
         }
       })
     }
+
     function drawCircle(ctx: CanvasRenderingContext2D, x: number, y: number) {
       ctx.beginPath()
       ctx.arc(x, y, 5, 0, 2 * Math.PI)
