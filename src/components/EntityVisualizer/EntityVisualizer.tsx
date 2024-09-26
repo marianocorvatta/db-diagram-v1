@@ -92,6 +92,8 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
     }
 
     function drawRelationships() {
+      const cornerRadius = 4 // Adjust this value for the roundness of corners
+
       relationships.forEach((rel) => {
         const fromEntity = entities.find((e) => e.name === rel.from)
         const toEntity = entities.find((e) => e.name === rel.to)
@@ -107,67 +109,99 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
           const propertyHeight = 30
           const centerOffset = propertyHeight / 2
 
-          // Calcula los puntos de inicio y fin centrados
+          // Calculate centered start and end points
           startY =
             fromEntity.y + fromPropIndex * propertyHeight + 40 + centerOffset
           endY = toEntity.y + toPropIndex * propertyHeight + 40 + centerOffset
 
-          // Verifica si las dos entidades están cerca horizontalmente
           const horizontalOverlap =
             fromEntity.x < toEntity.x + toEntity.width &&
             toEntity.x < fromEntity.x + fromEntity.width
 
           if (horizontalOverlap) {
-            // Si están demasiado cerca horizontalmente, ajusta la conexión a los lados opuestos
             if (fromEntity.y < toEntity.y) {
-              // De "fromEntity" a "toEntity" por la parte inferior de fromEntity y la parte superior de toEntity
               startX = fromEntity.x + fromEntity.width / 2
               endX = toEntity.x + toEntity.width / 2
-              startY = fromEntity.y + fromEntity.height // Parte inferior de fromEntity
-              endY = toEntity.y // Parte superior de toEntity
+              startY = fromEntity.y + fromEntity.height
+              endY = toEntity.y
             } else {
-              // De "fromEntity" a "toEntity" por la parte superior de fromEntity y la parte inferior de toEntity
               startX = fromEntity.x + fromEntity.width / 2
               endX = toEntity.x + toEntity.width / 2
-              startY = fromEntity.y // Parte superior de fromEntity
-              endY = toEntity.y + toEntity.height // Parte inferior de toEntity
+              startY = fromEntity.y
+              endY = toEntity.y + toEntity.height
             }
           } else {
-            // Si no están cerca horizontalmente, mantenemos la lógica original
             if (fromEntity.x < toEntity.x) {
-              startX = fromEntity.x + fromEntity.width // Borde derecho de fromEntity
-              endX = toEntity.x // Borde izquierdo de toEntity
+              startX = fromEntity.x + fromEntity.width // Right edge of fromEntity
+              endX = toEntity.x // Left edge of toEntity
             } else {
-              startX = fromEntity.x // Borde izquierdo de fromEntity
-              endX = toEntity.x + toEntity.width // Borde derecho de toEntity
+              startX = fromEntity.x // Left edge of fromEntity
+              endX = toEntity.x + toEntity.width // Right edge of toEntity
             }
           }
 
           if (!ctx) return
 
-          // Aquí cambiamos el color dependiendo de si la entidad está seleccionada
-          if (selectedEntity === fromEntity || selectedEntity === toEntity) {
-            ctx.strokeStyle = '#3B82F6' // Azul si una de las entidades está seleccionada
-          } else {
-            ctx.strokeStyle = '#888888' // Gris si ninguna entidad está seleccionada
-          }
+          // Set color based on selected entities
+          ctx.strokeStyle =
+            selectedEntity === fromEntity || selectedEntity === toEntity
+              ? '#3B82F6'
+              : '#888888'
 
-          // Dibujo de la línea quebrada con ajuste para evitar que pase por debajo de las entidades
+          // Drawing lines with smooth rounded corners
           ctx.beginPath()
           ctx.moveTo(startX, startY)
 
-          // Dibujar el segmento horizontal hasta el punto medio
           const midX = (startX + endX) / 2
-          ctx.lineTo(midX, startY) // Línea horizontal desde el punto de inicio hasta el medio
+          const midY = (startY + endY) / 2
 
-          // Dibujar el segmento vertical
-          ctx.lineTo(midX, endY) // Línea vertical desde el medio hasta el nivel del punto de fin
+          const curveDirection = startY < endY ? 1 : -1
+          console.log('curveDirection', curveDirection)
 
-          // Dibujar el segmento final horizontal hasta el destino
-          ctx.lineTo(endX, endY) // Línea horizontal hasta el destino
-          ctx.stroke()
+          if (curveDirection === 1) {
+            // abajo
+            // First horizontal segment
+            ctx.lineTo(midX + 4, startY)
 
-          // Dibujo de símbolos según la cardinalidad
+            // First curve with bezierCurveTo for smooth transition
+            ctx.bezierCurveTo(midX, startY + 1, midX, startY, midX, midY)
+
+            // Vertical segment
+            ctx.lineTo(midX, endY - 4)
+
+            // Second curve with bezierCurveTo
+            ctx.bezierCurveTo(
+              midX - 1,
+              endY - 1,
+              midX,
+              endY + 1,
+              midX - 40,
+              endY
+            )
+
+            // Last horizontal segment
+            ctx.lineTo(endX, endY)
+            ctx.stroke()
+          } else {
+            // arriba
+            // First horizontal segment
+            ctx.lineTo(midX + 4, startY)
+
+            // First curve with bezierCurveTo for smooth transition
+            ctx.bezierCurveTo(midX, startY, midX, startY, midX, midY)
+
+            // Vertical segment
+            ctx.lineTo(midX, endY + 4)
+
+            // Second curve with bezierCurveTo
+            ctx.bezierCurveTo(midX, endY, midX, endY, midX - cornerRadius, endY)
+
+            // Last horizontal segment
+            ctx.lineTo(endX, endY)
+            ctx.stroke()
+          }
+
+          // Draw cardinality symbols (optional, can adjust based on your needs)
           if (rel.cardinality === 'one-to-one') {
             drawCircle(ctx, startX, startY)
             drawCircle(ctx, endX, endY)
