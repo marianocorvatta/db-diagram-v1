@@ -14,6 +14,8 @@ import {
 function App() {
   const [entities, setEntities] = useState<Entity[]>([])
   const [relationships, setRelationships] = useState<Relationship[]>([])
+  const [isEditorFocused, setEditorFocused] = useState(false)
+
   return (
     <ResizablePanelGroup
       direction="horizontal"
@@ -24,17 +26,19 @@ function App() {
           <TextEditor
             setEntities={setEntities}
             setRelationships={setRelationships}
+            setEditorFocused={setEditorFocused}
           />
         </div>
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={70}>
         <ResizablePanelGroup direction="vertical">
-          <ResizablePanel defaultSize={90}>
-            <div className="flex h-full items-center justify-center p-6 bg-gray-800 user-select-none">
+          <ResizablePanel defaultSize={100}>
+            <div className="flex h-full items-center justify-center p-6 bg-gray-800">
               <EntityVisualizer
                 entities={entities}
                 relationships={relationships}
+                isEditorFocused={isEditorFocused}
               />
             </div>
           </ResizablePanel>

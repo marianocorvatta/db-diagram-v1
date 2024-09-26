@@ -1,5 +1,5 @@
 import CodeMirror from '@uiw/react-codemirror'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { javascript } from '@codemirror/lang-javascript'
 import { Button } from '@/components/ui/button'
 import { vscodeDark } from '@uiw/codemirror-theme-vscode'
@@ -121,11 +121,13 @@ Table Servicio {
 interface TextEditorProps {
   setEntities: (entities: Entity[]) => void
   setRelationships: (relationships: Relationship[]) => void
+  setEditorFocused: (isEditorFocused: boolean) => void
 }
 
 export default function TextEditor({
   setEntities,
   setRelationships,
+  setEditorFocused,
 }: TextEditorProps) {
   const [value, setValue] = useState(baseCode)
   const onChange = useCallback((val: string) => {
@@ -138,6 +140,25 @@ export default function TextEditor({
     setEntities(parsedEntities)
     setRelationships(parsedRelationships)
   }
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        document.activeElement &&
+        document.activeElement.tagName !== 'TEXTAREA' &&
+        document.activeElement.tagName !== 'DIV'
+      ) {
+        event.preventDefault()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   return (
     <div className="relative flex flex-col h-full max-h-screen">
       <div className="flex-1 overflow-y-auto">
@@ -148,6 +169,9 @@ export default function TextEditor({
           onChange={onChange}
           theme={vscodeDark}
           className="w-full h-full"
+          onFocus={() => setEditorFocused(true)}
+          onBlur={() => setEditorFocused(false)}
+          autoFocus={false}
         />
       </div>
       <Button

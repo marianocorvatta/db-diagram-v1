@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Entity, Relationship } from '../TextEditor/TextEditor'
 
-function useCanvas(entities: Entity[], relationships: Relationship[]) {
+function useCanvas(
+  entities: Entity[],
+  relationships: Relationship[],
+  isEditorFocused: boolean
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [draggedEntity, setDraggedEntity] = useState<Entity | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -337,16 +341,16 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
             if (isToRight) {
               // Para arriba
               ctx.lineTo(midX + cornerRadius, startY)
-              ctx.bezierCurveTo(midX + 8, startY, midX + 10, startY, midX + 5, midY)
-              ctx.lineTo(midX, endY)
               ctx.bezierCurveTo(
-                midX,
-                endY,
-                midX,
-                endY,
-                midX,
-                endY
+                midX + 8,
+                startY,
+                midX + 10,
+                startY,
+                midX + 5,
+                midY
               )
+              ctx.lineTo(midX, endY)
+              ctx.bezierCurveTo(midX, endY, midX, endY, midX, endY)
             } else {
               // Para arriba
               ctx.lineTo(midX + cornerRadius, startY)
@@ -408,7 +412,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
     // Handle mouse down, mouse move, mouse up, etc.
 
     function handleMouseDown(e: MouseEvent) {
-      if (isSpacePressed) {
+      if (isSpacePressed && !isEditorFocused) {
         setIsPanning(true)
         setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
         if (!canvas) return
@@ -492,7 +496,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
       setDraggedEntity(null)
       setIsPanning(false)
       if (!canvas) return
-      if (isSpacePressed) {
+      if (isSpacePressed && !isEditorFocused) {
         canvas.style.cursor = 'grab'
       } else {
         canvas.style.cursor = 'default'
@@ -534,7 +538,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
     }
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.code === 'Space' && !isSpacePressed) {
+      if (e.code === 'Space' && !isSpacePressed && !isEditorFocused) {
         e.preventDefault()
         setIsSpacePressed(true)
         if (!canvas) return
@@ -543,7 +547,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
     }
 
     function handleKeyUp(e: KeyboardEvent) {
-      if (e.code === 'Space') {
+      if (e.code === 'Space' && !isEditorFocused) {
         setIsSpacePressed(false)
         setIsPanning(false)
         if (!canvas) return
@@ -576,6 +580,7 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
     isPanning,
     hoveredProperty,
     selectedEntity,
+    isEditorFocused,
   ])
 
   return canvasRef
@@ -583,13 +588,15 @@ function useCanvas(entities: Entity[], relationships: Relationship[]) {
 interface EntityVisualizerProps {
   entities: Entity[]
   relationships: Relationship[]
+  isEditorFocused: boolean
 }
 
 export default function EntityVisualizer({
   entities,
   relationships,
+  isEditorFocused,
 }: EntityVisualizerProps) {
-  const canvasRef = useCanvas(entities, relationships)
+  const canvasRef = useCanvas(entities, relationships, isEditorFocused)
 
   useEffect(() => {
     const canvas = canvasRef.current
