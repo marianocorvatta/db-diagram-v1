@@ -31,7 +31,7 @@ function App() {
       <ResizablePanel defaultSize={70}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel defaultSize={90}>
-            <div className="flex h-full items-center justify-center p-6 bg-gray-800">
+            <div className="flex h-full items-center justify-center p-6 bg-gray-800 user-select-none">
               <EntityVisualizer
                 entities={entities}
                 relationships={relationships}
