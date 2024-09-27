@@ -4,7 +4,7 @@ import TextEditor, {
   Relationship,
 } from './components/TextEditor/TextEditor'
 import EntityVisualizer from './components/EntityVisualizer/EntityVisualizer'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -15,13 +15,31 @@ function App() {
   const [entities, setEntities] = useState<Entity[]>([])
   const [relationships, setRelationships] = useState<Relationship[]>([])
   const [isEditorFocused, setEditorFocused] = useState(false)
+  const [isEditorOpen, setEditorOpen] = useState(true)
+
+  useEffect(() => {
+    const handleCloseEditor = (event: KeyboardEvent) => {
+      if (event.key === '\\') {
+        event.preventDefault()
+        setEditorOpen(!isEditorOpen)
+      }
+    }
+    window.addEventListener('keydown', handleCloseEditor)
+
+    return () => {
+      window.removeEventListener('keydown', handleCloseEditor)
+    }
+  }, [isEditorOpen])
 
   return (
     <ResizablePanelGroup
       direction="horizontal"
-      className="min-h-screen bg-gray-900 overflow-x-hidden"
+      className="relative min-h-full bg-gray-900 overflow-hidden"
     >
-      <ResizablePanel defaultSize={30}>
+      <ResizablePanel
+        defaultSize={30}
+        style={{ flex: !isEditorOpen ? '0.0251 1 0px' : 'initial' }}
+      >
         <div className="h-full">
           <TextEditor
             setEntities={setEntities}
@@ -32,23 +50,21 @@ function App() {
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={70}>
-        <ResizablePanelGroup direction="vertical">
-          <ResizablePanel defaultSize={100}>
-            <div className="flex h-full items-center justify-center p-6 bg-gray-800">
-              <EntityVisualizer
-                entities={entities}
-                relationships={relationships}
-                isEditorFocused={isEditorFocused}
-              />
-            </div>
-          </ResizablePanel>
-          {/* <ResizableHandle withHandle />
+        <div className="flex h-full items-center justify-center p-6 bg-gray-800 overflow-hidden">
+          <EntityVisualizer
+            entities={entities}
+            relationships={relationships}
+            isEditorFocused={isEditorFocused}
+          />
+        </div>
+        {/* <ResizablePanelGroup direction="vertical">
+          <ResizableHandle withHandle />
           <ResizablePanel defaultSize={10} maxSize={10}>
             <div className="flex h-full items-center justify-center p-6">
               <span className="font-semibold">footer</span>
             </div>
-          </ResizablePanel> */}
-        </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup> */}
       </ResizablePanel>
     </ResizablePanelGroup>
   )

@@ -1,8 +1,8 @@
 import CodeMirror from '@uiw/react-codemirror'
-import { useCallback, useEffect, useState } from 'react'
-import { javascript } from '@codemirror/lang-javascript'
-import { Button } from '@/components/ui/button'
+import { useCallback, useState, useEffect } from 'react'
 import { vscodeDark } from '@uiw/codemirror-theme-vscode'
+import { Button } from '@/components/ui/button' // Asegúrate de que este import sea correcto o ajusta según tu estructura de carpetas.
+// import { dbml } from './dbml-language';
 
 export interface Entity {
   name: string
@@ -66,6 +66,7 @@ function parseDBML(dbml: string): {
         currentEntity.properties.push({ name, type })
         currentEntity.height += 30
       }
+
       const refMatch = line.match(/\[ref: > (\w+)\.(\w+)\]/)
       if (refMatch && currentEntity) {
         const toTable = refMatch[1]
@@ -98,24 +99,51 @@ function parseDBML(dbml: string): {
 }
 
 const baseCode = `Table User {
-  id uuid [pk]
-  name varchar
-  email varchar
-  createdAt timestamp
+  username varchar [pk]
+  password varchar
+  role integer
 }
 
 Table Product {
   id uuid [pk]
+  createdAt timestamp
   name varchar
-  price float
-  user_id uuid [ref: > User.id]
+  ip varchar [null]
+  detailModule varchar [null]
+  data text [null]
+  config text [null]
 }
 
-Table Servicio {
+Table Token {
   id uuid [pk]
+  createdAt timestamp
+  validUntil timestamp [null]
+  requestLimit integer [null]
   name varchar
-  price float
-  productId uuid [ref: > Product.id]
+  company varchar [null]
+  config text [null]
+  active bool
+  product uuid [ref: > Product.id]
+  user varchar [ref: > User.username]
+}
+
+Table Request {
+  id uuid [pk]
+  token uuid [ref: > Token.id]
+  createdAt timestamp
+  state integer [null]
+  extid varchar [null]
+}
+
+Table RequestData {
+  id integer [pk]
+  request uuid [ref: > Request.id]
+  createdAt timestamp
+  name varchar
+  type varchar
+  extension varchar
+  url varchar [null]
+  data binary [null]
 }`
 
 interface TextEditorProps {
@@ -129,16 +157,16 @@ export default function TextEditor({
   setRelationships,
   setEditorFocused,
 }: TextEditorProps) {
-  const [value, setValue] = useState(baseCode)
+  const [value, setValue] = useState<string>(baseCode)
+
   const onChange = useCallback((val: string) => {
     setValue(val)
   }, [])
 
   const handleVisualize = () => {
-    const { entities: parsedEntities, relationships: parsedRelationships } =
-      parseDBML(value)
-    setEntities(parsedEntities)
-    setRelationships(parsedRelationships)
+    const { entities, relationships } = parseDBML(value)
+    setEntities(entities)
+    setRelationships(relationships)
   }
 
   useEffect(() => {
@@ -153,7 +181,6 @@ export default function TextEditor({
     }
 
     window.addEventListener('keydown', handleKeyDown)
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
@@ -165,7 +192,7 @@ export default function TextEditor({
         <CodeMirror
           value={value}
           height="100%"
-          extensions={[javascript({ jsx: true })]}
+          extensions={[vscodeDark]} // Usar el lenguaje DBML
           onChange={onChange}
           theme={vscodeDark}
           className="w-full h-full"

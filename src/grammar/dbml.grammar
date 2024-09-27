@@ -1,0 +1,33 @@
+@top File { statement* }
+
+statement {
+  TableDeclaration |
+  ReferenceDeclaration
+}
+
+TableDeclaration {
+  kw<table> Identifier "{" propertyList "}"
+}
+
+ReferenceDeclaration {
+  Identifier "[" "ref:" ">" Identifier "." Identifier "]"
+}
+
+propertyList {
+  property+
+}
+
+property {
+  Identifier type
+}
+
+kw<table> { @specialize<Identifier, "Table"> }  // Specialized keyword for Table
+
+@tokens {
+  whitespace { $[ \t\r\n]+ }  // Token for skipping whitespace
+  Identifier { $[a-zA-Z_] $[a-zA-Z_0-9]* }  // Token for valid identifiers
+}
+
+@skip { whitespace }  // Skipping whitespace
+
+type { "int" | "varchar" | "uuid" | "float" | "timestamp" }  // Supported types
