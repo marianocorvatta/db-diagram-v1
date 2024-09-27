@@ -598,27 +598,27 @@ export default function EntityVisualizer({
 }: EntityVisualizerProps) {
   const canvasRef = useCanvas(entities, relationships, isEditorFocused)
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (canvas) {
-      // Ajustar el tamaño del canvas al tamaño del contenedor
-      const resizeCanvas = () => {
-        const parent = canvas.parentElement
-        if (parent) {
-          canvas.width = parent.clientWidth
-          canvas.height = parent.clientHeight
-        }
-      }
+  // useEffect(() => {
+  //   const canvas = canvasRef.current
+  //   if (canvas) {
+  //     // Ajustar el tamaño del canvas al tamaño del contenedor
+  //     const resizeCanvas = () => {
+  //       const parent = canvas.parentElement
+  //       if (parent) {
+  //         canvas.width = parent.clientWidth
+  //         canvas.height = parent.clientHeight
+  //       }
+  //     }
 
-      // Ajustar el tamaño al cargar la página y cuando cambie el tamaño de la ventana
-      window.addEventListener('resize', resizeCanvas)
-      resizeCanvas()
+  //     // Ajustar el tamaño al cargar la página y cuando cambie el tamaño de la ventana
+  //     window.addEventListener('resize', resizeCanvas)
+  //     resizeCanvas()
 
-      return () => {
-        window.removeEventListener('resize', resizeCanvas)
-      }
-    }
-  }, [canvasRef])
+  //     return () => {
+  //       window.removeEventListener('resize', resizeCanvas)
+  //     }
+  //   }
+  // }, [canvasRef])
 
   return <canvas ref={canvasRef} width={1492} height={1492} className="" />
 }
